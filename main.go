@@ -18,12 +18,13 @@ func main() {
 	var (
 		version bool
 		memberFilePath string
-		customHolidayPath string
+		customHolidayFilePath string
+		memberConfig config.MemberConfig
 	)
 
 	flag.BoolVar(&version, "version", false, "Print version information and quit")
 	flag.StringVar(&memberFilePath, "member", "", "Target json file path for Rotation member")
-	flag.StringVar(&customHolidayPath, "holiday", "", "Target json file path for customize holiday")
+	flag.StringVar(&customHolidayFilePath, "holiday", "", "Target json file path for customize holiday")
 	flag.Parse()
 
 	if version {
@@ -31,25 +32,40 @@ func main() {
 		os.Exit(0)
 	}
 
-	// TODO: require member json
-
-	if customHolidayPath != "" {
-		buf, err := ioutil.ReadFile(customHolidayPath)
+	if memberFilePath == "" {
+		fmt.Println("Require member option")
+		os.Exit(1)
+	} else {
+		buf, err := ioutil.ReadFile(memberFilePath)
 		if err != nil {
 			fmt.Println(fmt.Errorf("error: %s", err))
 			os.Exit(1)
 		}
 
-		var custom_holiday_config config.CustomHolidayConfig
-		err = json.Unmarshal(buf, &custom_holiday_config)
+		err = json.Unmarshal(buf, &memberConfig)
+		if err != nil {
+			fmt.Println(fmt.Errorf("error: %s", err))
+			os.Exit(1)
+		}
+	}
+
+	if customHolidayFilePath != "" {
+		buf2, err := ioutil.ReadFile(customHolidayFilePath)
+		if err != nil {
+			fmt.Println(fmt.Errorf("error: %s", err))
+			os.Exit(1)
+		}
+
+		var customHolidayConfig config.CustomHolidayConfig
+		err = json.Unmarshal(buf2, &customHolidayConfig)
 		if err != nil {
 			fmt.Println(fmt.Errorf("error: %s", err))
 			os.Exit(1)
 		}
 
 		holidays := []time.Time{}
-		for i := 0; i < len(custom_holiday_config); i++ {
-			datetime, err := time.Parse("2006-01-02", custom_holiday_config[i])
+		for i := 0; i < len(customHolidayConfig); i++ {
+			datetime, err := time.Parse("2006-01-02", customHolidayConfig[i])
 			if err != nil {
 				fmt.Println(fmt.Errorf("error: %s", err))
 				os.Exit(1)
