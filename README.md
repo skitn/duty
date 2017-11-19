@@ -1,0 +1,2 @@
+# duty
+member rotation script
