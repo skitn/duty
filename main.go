@@ -1,13 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/yut-kt/goholiday"
 
 	"github.com/skitn/duty/config"
@@ -16,15 +16,13 @@ import (
 func main() {
 
 	var (
-		version               bool
-		memberFilePath        string
-		customHolidayFilePath string
-		memberConfig          config.MemberConfig
+		version         bool
+		configPath      string
+		config          config.Config
 	)
 
 	flag.BoolVar(&version, "version", false, "Print version information and quit")
-	flag.StringVar(&memberFilePath, "member", "", "Target json file path for Rotation member")
-	flag.StringVar(&customHolidayFilePath, "holiday", "", "Target json file path for customize holiday")
+	flag.StringVar(&configPath, "config", "", "Target toml file path for Config")
 	flag.Parse()
 
 	if version {
@@ -32,40 +30,21 @@ func main() {
 		os.Exit(0)
 	}
 
-	if memberFilePath == "" {
-		fmt.Println("Require member option")
-		os.Exit(1)
-	} else {
-		buf, err := ioutil.ReadFile(memberFilePath)
+	if configPath != "" {
+		buf, err := ioutil.ReadFile(configPath)
 		if err != nil {
 			fmt.Println(fmt.Errorf("error: %s", err))
 			os.Exit(1)
 		}
 
-		err = json.Unmarshal(buf, &memberConfig)
-		if err != nil {
-			fmt.Println(fmt.Errorf("error: %s", err))
-			os.Exit(1)
-		}
-	}
-
-	if customHolidayFilePath != "" {
-		buf2, err := ioutil.ReadFile(customHolidayFilePath)
-		if err != nil {
-			fmt.Println(fmt.Errorf("error: %s", err))
-			os.Exit(1)
-		}
-
-		var customHolidayConfig config.CustomHolidayConfig
-		err = json.Unmarshal(buf2, &customHolidayConfig)
-		if err != nil {
+		if err := toml.Unmarshal(buf, &config); err != nil {
 			fmt.Println(fmt.Errorf("error: %s", err))
 			os.Exit(1)
 		}
 
 		holidays := []time.Time{}
-		for i := 0; i < len(customHolidayConfig); i++ {
-			datetime, err := time.Parse("2006-01-02", customHolidayConfig[i])
+		for i := 0; i < len(config.CustomHolidays); i++ {
+			datetime, err := time.Parse("2006-01-02", config.CustomHolidays[i])
 			if err != nil {
 				fmt.Println(fmt.Errorf("error: %s", err))
 				os.Exit(1)
@@ -78,9 +57,9 @@ func main() {
 	var currentDatePointer *time.Time
 	currentDate := time.Now()
 	currentDatePointer = &currentDate
-	for i := 0; i < len(memberConfig); i++ {
+	for i := 0; i < len(config.Members); i++ {
 		*currentDatePointer = currentDatePointer.AddDate(0, 0, 1)
-		fmt.Println(memberConfig[i])
+		fmt.Println(config.Members[i])
 		fmt.Println(currentDatePointer)
 	}
 

@@ -1,5 +1,7 @@
 package config
 
-type CustomHolidayConfig []string
-
-type MemberConfig []string
+type Config struct {
+	DutyCount           int
+	Members             []string
+	CustomHolidays      []string
+}
