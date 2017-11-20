@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"time"
-	"io/ioutil"
 
 	"github.com/yut-kt/goholiday"
 
@@ -16,10 +16,10 @@ import (
 func main() {
 
 	var (
-		version bool
-		memberFilePath string
+		version               bool
+		memberFilePath        string
 		customHolidayFilePath string
-		memberConfig config.MemberConfig
+		memberConfig          config.MemberConfig
 	)
 
 	flag.BoolVar(&version, "version", false, "Print version information and quit")
@@ -73,6 +73,15 @@ func main() {
 			holidays = append(holidays, datetime)
 		}
 		goholiday.SetUniqueHolidays(holidays)
+	}
+
+	var currentDatePointer *time.Time
+	currentDate := time.Now()
+	currentDatePointer = &currentDate
+	for i := 0; i < len(memberConfig); i++ {
+		*currentDatePointer = currentDatePointer.AddDate(0, 0, 1)
+		fmt.Println(memberConfig[i])
+		fmt.Println(currentDatePointer)
 	}
 
 	// check holiday
