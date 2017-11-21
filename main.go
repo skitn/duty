@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -16,13 +17,15 @@ import (
 func main() {
 
 	var (
-		version         bool
-		configPath      string
-		config          config.Config
+		version    bool
+		configPath string
+		startDate  string
+		config     config.Config
 	)
 
 	flag.BoolVar(&version, "version", false, "Print version information and quit")
 	flag.StringVar(&configPath, "config", "", "Target toml file path for Config")
+	flag.StringVar(&startDate, "start-date", "", "Rotation start date. format YYYY-MM-DD")
 	flag.Parse()
 
 	if version {
@@ -55,23 +58,27 @@ func main() {
 	}
 
 	var currentDatePointer *time.Time
-	currentDate := time.Now()
-	currentDatePointer = &currentDate
-	for i := 0; i < len(config.Members); i++ {
-		*currentDatePointer = currentDatePointer.AddDate(0, 0, 1)
-		fmt.Println(config.Members[i])
-		fmt.Println(currentDatePointer)
-	}
-
-	// check holiday
-	NYD := "2017-11-17"
-	datetime, err := time.Parse("2006-01-02", NYD)
+	currentDate, err := time.Parse("2006-01-02", startDate)
 	if err != nil {
-		panic(err)
+		fmt.Println(fmt.Errorf("error: %s", err))
+		os.Exit(1)
 	}
-	fmt.Println(goholiday.IsHoliday(datetime))
+	currentDatePointer = &currentDate
 
-	// rotation start
+	var dutyDays = []string{}
+	for i := 0; i < len(config.Members); i++ {
+		dutyDays = nil
+		var j int
+		for j < config.DutyCount {
+			if !goholiday.IsHoliday(currentDate) {
+				dutyDays = append(dutyDays, currentDate.Format("01/02"))
+				j++
+			}
+			*currentDatePointer = currentDatePointer.AddDate(0, 0, 1)
+		}
+		fmt.Printf("%s：%s\n", config.Members[i], strings.Join(dutyDays, ","))
+	}
+
 	os.Exit(0)
 }
 
