@@ -56,9 +56,8 @@ func main() {
 	}
 	currentDatePointer = &currentDate
 
-	var dutyDays = []string{}
 	for i := 0; i < len(conf.Members); i++ {
-		dutyDays = nil
+		var dutyDays []string
 		var j int
 		for j < conf.DutyCount {
 			if !goholiday.IsHoliday(currentDate) {
